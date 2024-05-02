@@ -13,26 +13,29 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: [18.x]  # Node versions you want to test against
+        include:
+          - lambda-path: authorizer-lambda
+          - lambda-path: dispatcher-lambda
+          - lambda-path: entrypoint-lambda
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+        cache-dependency-path: ${{ matrix.lambda-path }}/package-lock.json  # Specify the path for each lambda's package-lock.json
     - name: Install dependencies and run tests
       run: |
-        cd authorizer-lambda && npm install && npm test -- --coverage
-        cd ../dispatcher-lambda && npm install && npm test -- --coverage
-        cd ../entrypoint-lambda && npm install && npm test -- --coverage
+        cd ${{ matrix.lambda-path }} && npm install && npm test -- --coverage
     - name: Upload test results and coverage
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v2
       with:
-        name: test-results
+        name: test-results-${{ matrix.lambda-path }}
         path: |
-          **/coverage/lcov-report
-          **/coverage/lcov.info
+          ${{ matrix.lambda-path }}/coverage/lcov-report
+          ${{ matrix.lambda-path }}/coverage/lcov.info
 
   build:
     needs: test
