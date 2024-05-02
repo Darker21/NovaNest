@@ -5,6 +5,11 @@
 
 version: 2
 updates:
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "monthly"
+
   - package-ecosystem: "npm"
     directory: "/authorizer-lambda"
     schedule:
