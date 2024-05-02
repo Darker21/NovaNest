@@ -1,0 +1,76 @@
+name: Build and Deploy Lambda Functions
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - name: Install dependencies and run tests
+      run: |
+        cd authorizer-lambda && npm install && npm test -- --coverage
+        cd ../dispatcher-lambda && npm install && npm test -- --coverage
+        cd ../entrypoint-lambda && npm install && npm test -- --coverage
+    - name: Upload test results and coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          **/coverage/lcov-report
+          **/coverage/lcov.info
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python and Cache
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8'
+        cache: 'pip'
+    - name: Install SAM CLI
+      run: pip install aws-sam-cli
+    - name: Build SAM Application
+      run: sam build
+    - name: Cache SAM build artifacts
+      uses: actions/cache@v4
+      with:
+        path: .aws-sam/build
+        key: ${{ runner.os }}-sam-build-${{ hashFiles('**/template.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-sam-build-
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python from Cache
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8'
+        cache: 'pip'
+    - name: Install SAM CLI
+      run: pip install aws-sam-cli
+    - name: Deploy SAM Application
+      run: sam deploy --no-confirm-changeset
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'eu-west-2'
