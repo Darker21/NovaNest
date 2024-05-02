@@ -11,6 +11,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    outputs:
+      tests-passed: ${{ steps.check-results.outputs.passed }}
     strategy:
       matrix:
         node-version: [18.x]  # Node versions you want to test against
@@ -30,10 +32,27 @@ jobs:
       run: |
         cd ${{ matrix.lambda-path }} && npm install
     - name: Run tests and collect coverage
-      id: jest
-      continue-on-error: true
+      id: test-${{ matrix.lambda-path }}
+      continue-on-error: true  # Continue on test failure
       run: |
         cd ${{ matrix.lambda-path }} && npm test -- --coverage
+    - name: Check all test results
+      id: check-results
+      if: ${{ always() }}
+      run: |
+        result=0
+        echo "Checking results..."
+        for path in authorizer-lambda dispatcher-lambda entrypoint-lambda; do
+          if [ -f $path/failed ]; then
+            echo "$path tests failed."
+            result=1
+          fi
+        done
+        if [ $result -eq 0 ]; then
+          echo "::set-output name=passed::true"
+        else
+          echo "::set-output name=passed::false"
+        fi
     - name: Upload test results and coverage
       if: always()
       uses: actions/upload-artifact@v4
@@ -45,6 +64,7 @@ jobs:
 
   build:
     needs: test
+    if: ${{ needs.test.outputs.tests-passed }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
