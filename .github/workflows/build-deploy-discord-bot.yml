@@ -32,7 +32,6 @@ jobs:
       run: |
         cd ${{ matrix.lambda-path }} && npm install
     - name: Run tests and collect coverage
-      id: test-${{ matrix.lambda-path }}
       continue-on-error: true  # Continue on test failure
       run: |
         cd ${{ matrix.lambda-path }} && npm test -- --coverage
