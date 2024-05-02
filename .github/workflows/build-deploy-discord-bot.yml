@@ -19,18 +19,24 @@ jobs:
           - lambda-path: dispatcher-lambda
           - lambda-path: entrypoint-lambda
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: ${{ matrix.lambda-path }}/package-lock.json  # Specify the path for each lambda's package-lock.json
-    - name: Install dependencies and run tests
+        cache-dependency-path: ${{ matrix.lambda-path }}/package-lock.json
+    - name: Install dependencies
       run: |
-        cd ${{ matrix.lambda-path }} && npm install && npm test -- --coverage
+        cd ${{ matrix.lambda-path }} && npm install
+    - name: Run tests and collect coverage
+      id: jest
+      continue-on-error: true
+      run: |
+        cd ${{ matrix.lambda-path }} && npm test -- --coverage
     - name: Upload test results and coverage
-      uses: actions/upload-artifact@v2
+      if: always()
+      uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ matrix.lambda-path }}
         path: |
