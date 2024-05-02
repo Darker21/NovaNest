@@ -1,0 +1,39 @@
+{
+  "name": "entrypoint-lambda",
+  "version": "1.0.0",
+  "description": "The entrypoint lambda for the NovaNest bot",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Darker21/NovaNest.git"
+  },
+  "keywords": [
+    "node",
+    "discord",
+    "javascript",
+    "discord-bot",
+    "serverless",
+    "aws",
+    "lambda"
+  ],
+  "author": "Jacob Darker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Darker21/NovaNest/issues"
+  },
+  "homepage": "https://github.com/Darker21/NovaNest#readme",
+  "dependencies": {
+    "aws-sdk": "^2.1612.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "aws-sdk-mock": "^5.9.0",
+    "jest": "^27.2.5"
+  },
+  "files": [
+    "app.js"
+  ]
+}

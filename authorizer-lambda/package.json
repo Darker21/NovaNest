@@ -1,0 +1,41 @@
+{
+  "name": "authorizer-lambda",
+  "version": "1.0.0",
+  "description": "The authorization lambda for Discord Bots",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Darker21/NovaNest.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "discord-bot",
+    "authorizer",
+    "node",
+    "javascript",
+    "lambda",
+    "aws"
+  ],
+  "author": "Jacob Darker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Darker21/NovaNest/issues"
+  },
+  "homepage": "https://github.com/Darker21/NovaNest#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.556.0",
+    "aws-sdk": "^2.1604.0",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5"
+  },
+  "files": [
+    "app.js"
+  ]
+}

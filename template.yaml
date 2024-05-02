@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  NovaNest - AWS Serverless Discord Bot
+
+Globals:
+  Api:
+    TracingEnabled: true
+  Function:
+    Timeout: 3
+    Tracing: Active
+    Tags:
+      Application: NovaNest
+      Environment: Production
+
+Resources:
+  NovaNestBotApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Tags:
+        Application: NovaNest
+        Environment: Production
+      Auth:
+        DefaultAuthorizer: DiscordRequestAuthorizer
+        Authorizers:
+          DiscordRequestAuthorizer:
+            FunctionPayloadType: REQUEST
+            FunctionArn: !GetAtt DiscordRequestAuthorizerFunction.Arn
+            Identity:
+              Headers:
+                - X-Signature-Ed25519
+                - X-Signature-Timestamp
+
+  DiscordRequestAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: authorizer-lambda/
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Policies:
+        - AWSLambdaBasicExecutionRole
+
+  EntrypointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: entrypoint-lambda/
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Events:
+        Endpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NovaNestBotApi
+            Path: /discord
+            Method: POST
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Ref NovaNestCommandsQueue
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt NovaNestCommandsQueue.QueueName
+        - AWSLambdaBasicExecutionRole
+
+  DispatcherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dispatcher-lambda/
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Events:
+        NovaNestCommandEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt NovaNestCommandsQueue.Arn
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - LambdaInvokePolicy:
+            FunctionName: '*'
+
+  HelloLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: commands/hello/
+      Handler: app.handler
+      Runtime: nodejs18.x
+      Layers:
+        - !Ref CommandHandlerLayer
+      Policies:
+        - AWSLambdaBasicExecutionRole
+
+  NovaNestCommandsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: nova-nest-discord-commands
+      Tags:
+        - Key: Application
+          Value: NovaNest
+        - Key: Environment
+          Value: Production
+
+  CommandHandlerLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: nova-nest-command-handler-layer
+      Description: Shared libraries and utilities for command handlers
+      ContentUri: node-command-lambda-layer/
+      CompatibleRuntimes:
+        - nodejs18.x
+      RetentionPolicy: Retain
+
+Outputs:
+  NovaNestBotApi:
+    Description: "API Gateway endpoint URL for the NovaNest Discord bot"
+    Value: !Sub "https://${NovaNestBotApi}.execute-api.${AWS::Region}.amazonaws.com/prod/discord"
+
+  SQSQueueURL:
+    Description: "URL of the SQS queue for handling the NovaNest Discord bot commands"
+    Value: !Ref NovaNestCommandsQueue
+
+  SQSQueueARN:
+    Description: "ARN of the SQS queue for handling the NovaNest Discord bot commands"
+    Value: !GetAtt NovaNestCommandsQueue.Arn
+
+  LambdaLayerArn:
+    Description: "ARN of the shared Lambda layer for the NovaNest Discord bot commands"
+    Value: !Ref CommandHandlerLayer
