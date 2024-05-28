@@ -17,20 +17,15 @@ Resources:
   NovaNestBotApi:
     Type: AWS::Serverless::Api
     Properties:
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: swagger.yaml
       StageName: prod
       Tags:
         Application: NovaNest
         Environment: Production
-      Auth:
-        DefaultAuthorizer: DiscordRequestAuthorizer
-        Authorizers:
-          DiscordRequestAuthorizer:
-            FunctionPayloadType: REQUEST
-            FunctionArn: !GetAtt DiscordRequestAuthorizerFunction.Arn
-            Identity:
-              Headers:
-                - X-Signature-Ed25519
-                - X-Signature-Timestamp
 
   DiscordRequestAuthorizerFunction:
     Type: AWS::Serverless::Function
@@ -41,8 +36,17 @@ Resources:
       Environment:
         Variables:
           NODE_ENV: production
+          ENTRYPOINT_FUNCTION_ARN: !GetAtt EntrypointFunction.Arn
       Policies:
         - AWSLambdaBasicExecutionRole
+
+  ApiGatewayPermissionToInvokeAuthorizer:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DiscordRequestAuthorizerFunction.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${NovaNestBotApi}/*/*/"
 
   EntrypointFunction:
     Type: AWS::Serverless::Function
@@ -50,13 +54,6 @@ Resources:
       CodeUri: entrypoint-lambda/
       Handler: app.handler
       Runtime: nodejs18.x
-      Events:
-        Endpoint:
-          Type: Api
-          Properties:
-            RestApiId: !Ref NovaNestBotApi
-            Path: /discord
-            Method: POST
       Environment:
         Variables:
           NODE_ENV: production
@@ -84,17 +81,6 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - LambdaInvokePolicy:
             FunctionName: '*'
-
-  # HelloLambdaFunction:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     CodeUri: commands/hello/
-  #     Handler: app.handler
-  #     Runtime: nodejs18.x
-  #     Layers:
-  #       - !Ref CommandHandlerLayer
-  #     Policies:
-  #       - AWSLambdaBasicExecutionRole
 
   NovaNestCommandsQueue:
     Type: AWS::SQS::Queue
@@ -132,3 +118,7 @@ Outputs:
   LambdaLayerArn:
     Description: "ARN of the shared Lambda layer for the NovaNest Discord bot commands"
     Value: !Ref CommandHandlerLayer
+
+  DiscordRequestAuthorizerFunctionArn:
+    Description: "ARN of the Discord request authorizer function"
+    Value: !GetAtt DiscordRequestAuthorizerFunction.Arn

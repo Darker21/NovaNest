@@ -1,0 +1,154 @@
+swagger: "2.0"
+info:
+  title: "NovaNest API"
+  version: "1.0"
+basePath: "/prod"
+schemes:
+  - "https"
+paths:
+  /discord/interaction:
+    post:
+      operationId: POST_Discord_Interaction
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters: 
+      - name: "x-signature-timestamp"
+        in: "header"
+        description: "The timestamp of the request"
+        required: true
+        type: "string"
+      - name: "x-signature-ed25519"
+        type: "string"
+        in: "header"
+        required: true
+      - name: "interaction"
+        in: "body"
+        description: "Interaction data from discord"
+        required: true
+        schema:
+          $ref: "#/definitions/DiscordInteraction"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/InteractionResponse"
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DiscordRequestAuthorizerFunction.Arn}/invocations
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+definitions:
+  DiscordInteraction:
+    type: "object"
+    properties:
+      type:
+        type: "integer"
+        description: "The type of the interaction."
+      token:
+        type: "string"
+        description: "A continuation token for responding to the interaction."
+      member:
+        $ref: "#/definitions/Member"
+      id:
+        type: "string"
+        description: "ID of the interaction."
+      guild_id:
+        type: "string"
+        description: "ID of the guild where the interaction occurred."
+      data:
+        $ref: "#/definitions/InteractionData"
+    required:
+      - "type"
+      - "token"
+      - "id"
+
+  Member:
+    type: "object"
+    properties:
+      user:
+        $ref: "#/definitions/User"
+      roles:
+        type: "array"
+        items:
+          type: "string"
+        description: "Role IDs the member has."
+      permissions:
+        type: "string"
+        description: "Permission bit set."
+
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "The ID of the user."
+      username:
+        type: "string"
+        description: "The user's username."
+      discriminator:
+        type: "string"
+        description: "The user's discriminator."
+      avatar:
+        type: "string"
+        description: "The user's avatar hash."
+
+  InteractionData:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        description: "The name of the command."
+      options:
+        type: "array"
+        items:
+          $ref: "#/definitions/CommandOption"
+
+  CommandOption:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        description: "The name of the command option."
+      value:
+        type: "string"
+        description: "The value of the command option."
+
+  InteractionResponse:
+    type: "object"
+    properties:
+      type:
+        type: "integer"
+        description: "The type of response."
+      data:
+        $ref: "#/definitions/MessageData"
+
+  MessageData:
+    type: "object"
+    properties:
+      content:
+        type: "string"
+        description: "Message content."
+      embeds:
+        type: "array"
+        items:
+          $ref: "#/definitions/Embed"
+
+  Embed:
+    type: "object"
+    properties:
+      title:
+        type: "string"
+        description: "Title of the embed."
+      description:
+        type: "string"
+        description: "Description of the embed."
+      url:
+        type: "string"
+        description: "URL of the embed."
