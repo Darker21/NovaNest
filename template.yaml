@@ -78,16 +78,16 @@ Resources:
         - LambdaInvokePolicy:
             FunctionName: '*'
 
-  HelloLambdaFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: commands/hello/
-      Handler: app.handler
-      Runtime: nodejs18.x
-      Layers:
-        - !Ref CommandHandlerLayer
-      Policies:
-        - AWSLambdaBasicExecutionRole
+  # HelloLambdaFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: commands/hello/
+  #     Handler: app.handler
+  #     Runtime: nodejs18.x
+  #     Layers:
+  #       - !Ref CommandHandlerLayer
+  #     Policies:
+  #       - AWSLambdaBasicExecutionRole
 
   NovaNestCommandsQueue:
     Type: AWS::SQS::Queue
