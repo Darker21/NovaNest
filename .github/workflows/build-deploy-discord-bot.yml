@@ -48,9 +48,9 @@ jobs:
             fi
           done
           if [ $result -eq 0 ]; then
-            echo "::set-output name=passed::true"
+            echo "passed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::set-output name=passed::false"
+            echo "passed=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Upload test results and coverage
         if: always()
@@ -63,7 +63,7 @@ jobs:
 
   build:
     needs: test
-    if: ${{ needs.test.outputs.tests-passed }}
+    if: ${{ needs.test.outputs.tests-passed == '0' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +71,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
       - name: Install SAM CLI
         run: pip install aws-sam-cli
       - name: Build SAM Application
@@ -93,7 +92,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
       - name: Install SAM CLI
         run: pip install aws-sam-cli
       - name: Deploy SAM Application
