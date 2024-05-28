@@ -80,6 +80,11 @@ jobs:
           key: ${{ runner.os }}-sam-build-${{ hashFiles('**/template.yaml') }}
           restore-keys: |
             ${{ runner.os }}-sam-build-
+      - name: Upload SAM Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sam-build-artifacts
+          path: .aws-sam/build
 
   deploy:
     needs: build
