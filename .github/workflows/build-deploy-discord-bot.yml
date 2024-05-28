@@ -14,6 +14,7 @@ jobs:
     outputs:
       tests-passed: ${{ steps.check-results.outputs.passed }}
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x] # Node versions you want to test against
         include:
@@ -32,7 +33,7 @@ jobs:
         run: |
           cd ${{ matrix.lambda-path }} && npm install
       - name: Run tests and collect coverage
-        continue-on-error: true # Continue on test failure
+        continue-on-error: true
         run: |
           cd ${{ matrix.lambda-path }} && npm test -- --coverage
       - name: Check all test results
@@ -42,16 +43,12 @@ jobs:
           result=0
           echo "Checking results..."
           for path in authorizer-lambda dispatcher-lambda entrypoint-lambda; do
-            if [ -f $path/failed ]; then
+            if [ -f "${{ github.workspace }}/$path/failed" ]; then
               echo "$path tests failed."
               result=1
             fi
           done
-          if [ $result -eq 0 ]; then
-            echo "passed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "passed=$result" > $GITHUB_OUTPUT
       - name: Upload test results and coverage
         if: always()
         uses: actions/upload-artifact@v4
