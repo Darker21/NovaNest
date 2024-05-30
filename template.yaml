@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: >
+Transform:
+  - AWS::LanguageExtensions
+  - AWS::Serverless-2016-10-31
+Description: |
   NovaNest - AWS Serverless Discord Bot
 
 Globals:
@@ -17,11 +19,6 @@ Resources:
   NovaNestBotApi:
     Type: AWS::Serverless::Api
     Properties:
-      DefinitionBody:
-        'Fn::Transform':
-          Name: 'AWS::Include'
-          Parameters:
-            Location: swagger.yaml
       StageName: prod
       Tags:
         Application: NovaNest
@@ -39,14 +36,28 @@ Resources:
           ENTRYPOINT_FUNCTION_ARN: !GetAtt EntrypointFunction.Arn
       Policies:
         - AWSLambdaBasicExecutionRole
-
-  ApiGatewayPermissionToInvokeAuthorizer:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt DiscordRequestAuthorizerFunction.Arn
-      Action: "lambda:InvokeFunction"
-      Principal: "apigateway.amazonaws.com"
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${NovaNestBotApi}/*/*/"
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+                - secretsmanager:DescribeSecret
+              Resource: '*'
+      Events:
+        Endpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref NovaNestBotApi
+            Path: /discord/interactions
+            Method: POST
+            RequestParameters:
+              - method.request.header.X-signature-ed25519:
+                  Required: true
+              - method.request.header.x-signature-timestamp:
+                  Required: true
+            RequestModel:
+              Model: !Ref DiscordInteractionRequestModel
+              Required: true
 
   EntrypointFunction:
     Type: AWS::Serverless::Function
@@ -102,23 +113,120 @@ Resources:
         - nodejs18.x
       RetentionPolicy: Retain
 
+  DiscordInteractionRequestModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      ContentType: application/json
+      RestApiId: !Ref NovaNestBotApi
+      Schema:
+        $schema: http://json-schema.org/draft-04/schema#
+        title: DiscordInteractionRequest
+        type: object
+        properties:
+          id:
+            $ref: '#/definitions/snowflake'
+          application_id:
+            $ref: '#/definitions/snowflake'
+          type:
+            type: integer
+            description: 'The type of interaction that was received see:
+              https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-type'
+            minimum: 1
+            maximum: 5
+          data:
+            nullable: true
+            type: object
+            description: The data associated with the interaction, if any
+          guild:
+            type: object
+            nullable: true
+            description: The guild the interaction came from
+          guild_id:
+            $ref: '#/definitions/snowflake'
+            nullable: true
+            description: The id of the guild the interaction came from
+          channel:
+            type: object
+            nullable: true
+            description: The channel the interaction came from
+          channel_id:
+            $ref: '#/definitions/snowflake'
+            nullable: true
+            description: The id of the channel the interaction came from
+          member:
+            type: object
+            nullable: true
+            description: The member that invoked the interaction
+          user:
+            type: object
+            nullable: true
+            description: The user that invoked the interaction, if invoked in a DM
+          token:
+            type: string
+            description: The continuation token for responding to the interaction
+          version:
+            type: integer
+            minimum: 1
+            maximum: 1
+            description: Read-only property, always 1
+          message:
+            type: object
+            nullable: true
+            description: For components, the message they were attached to
+          app_permissions:
+            type: string
+            nullable: true
+            description: The permissions the app or bot has within the channel the
+              interaction was sent from
+          locale:
+            type: string
+            nullable: true
+            description: Selected language of the invoking user
+          guild_locale:
+            type: string
+            nullable: true
+            description: Selected language of the guild, if invoked in a guild
+          entitlements:
+            type: array
+            items:
+              type: object
+          authorizing_integration_owners:
+            type: object
+            description: Mapping of installation contexts that the interaction was
+              authorized for to related user or guild IDs. See Authorizing
+              Integration Owners Object for details
+          context:
+            type: integer
+            description: Context where the interaction was triggered from
+            nullable: true
+            minimum: 0
+            maximum: 2
+        definitions:
+          snowflake:
+            type: string
+            description: A Discord Snowflake, a 64-bit unsigned integer represented as a
+              string
+            pattern: ^[0-9]+$
+            maxLength: 20
+            minLength: 1
+
 Outputs:
   NovaNestBotApi:
-    Description: "API Gateway endpoint URL for the NovaNest Discord bot"
-    Value: !Sub "https://${NovaNestBotApi}.execute-api.${AWS::Region}.amazonaws.com/prod/discord"
+    Description: API Gateway endpoint URL for the NovaNest Discord bot
+    Value: !Sub https://${NovaNestBotApi}.execute-api.${AWS::Region}.amazonaws.com/prod/discord
 
   SQSQueueURL:
-    Description: "URL of the SQS queue for handling the NovaNest Discord bot commands"
+    Description: URL of the SQS queue for handling the NovaNest Discord bot commands
     Value: !Ref NovaNestCommandsQueue
 
   SQSQueueARN:
-    Description: "ARN of the SQS queue for handling the NovaNest Discord bot commands"
+    Description: ARN of the SQS queue for handling the NovaNest Discord bot commands
     Value: !GetAtt NovaNestCommandsQueue.Arn
 
   LambdaLayerArn:
-    Description: "ARN of the shared Lambda layer for the NovaNest Discord bot commands"
+    Description: ARN of the shared Lambda layer for the NovaNest Discord bot commands
     Value: !Ref CommandHandlerLayer
 
   DiscordRequestAuthorizerFunctionArn:
-    Description: "ARN of the Discord request authorizer function"
+    Description: ARN of the Discord request authorizer function
     Value: !GetAtt DiscordRequestAuthorizerFunction.Arn

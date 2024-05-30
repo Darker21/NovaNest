@@ -131,3 +131,4 @@ dist
 
 # Aws
 .aws-*
+sam-deploy-local.toml
