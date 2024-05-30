@@ -91,6 +91,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Download SAM Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: sam-build-artifacts
+          path: .aws-sam/build
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
