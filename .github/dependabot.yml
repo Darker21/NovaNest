@@ -14,18 +14,34 @@ updates:
     directory: "/authorizer-lambda"
     schedule:
       interval: "weekly"
+    group: 
+      name: "Lambda-Functions"
+    reviewers: 
+      - "Darker21"
       
   - package-ecosystem: "npm"
     directory: "/dispatcher-lambda"
     schedule:
       interval: "weekly"
+    group: 
+      name: "Lambda-Functions"
+    reviewers: 
+      - "Darker21"
       
   - package-ecosystem: "npm"
     directory: "/entrypoint-lambda"
     schedule:
       interval: "weekly"
+    group: 
+      name: "Lambda-Functions"
+    reviewers: 
+      - "Darker21"
       
   - package-ecosystem: "npm"
     directory: "/node-command-lambda-layer/nodejs"
     schedule:
       interval: "weekly"
+    group: 
+      name: "Lambda-Functions"
+    reviewers: 
+      - "Darker21"
