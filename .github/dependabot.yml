@@ -14,8 +14,6 @@ updates:
     directory: "/authorizer-lambda"
     schedule:
       interval: "weekly"
-    group: 
-      name: "Lambda-Functions"
     reviewers: 
       - "Darker21"
       
@@ -23,8 +21,6 @@ updates:
     directory: "/dispatcher-lambda"
     schedule:
       interval: "weekly"
-    group: 
-      name: "Lambda-Functions"
     reviewers: 
       - "Darker21"
       
@@ -32,8 +28,6 @@ updates:
     directory: "/entrypoint-lambda"
     schedule:
       interval: "weekly"
-    group: 
-      name: "Lambda-Functions"
     reviewers: 
       - "Darker21"
       
@@ -41,7 +35,5 @@ updates:
     directory: "/node-command-lambda-layer/nodejs"
     schedule:
       interval: "weekly"
-    group: 
-      name: "Lambda-Functions"
     reviewers: 
       - "Darker21"
