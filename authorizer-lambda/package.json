@@ -32,7 +32,7 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.588.0",
     "@aws-sdk/client-lambda": "^3.588.0",
-    "aws-sdk": "^2.1633.0",
+    "aws-sdk": "^2.1638.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5"
   },
