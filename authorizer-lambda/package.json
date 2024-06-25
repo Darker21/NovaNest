@@ -30,7 +30,7 @@
     "jest": "^29.7.0"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.599.0",
+    "@aws-sdk/client-secrets-manager": "^3.600.0",
     "@aws-sdk/client-lambda": "^3.600.0",
     "aws-sdk": "^2.1647.0",
     "crypto": "^1.0.1",
