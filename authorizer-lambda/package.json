@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.606.0",
-    "@aws-sdk/client-lambda": "^3.608.0",
+    "@aws-sdk/client-lambda": "^3.614.0",
     "aws-sdk": "^2.1652.0",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5"
